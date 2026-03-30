@@ -1,0 +1,16 @@
+# Never commit these
+.env
+.env.local
+.env.production
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Node (if ever added)
+node_modules/

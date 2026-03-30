@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MARXi — Website Builder</title>
+  <link rel="stylesheet" href="../styles/global.css"/>
+  <link rel="stylesheet" href="../styles/app.css"/>
+</head>
+<body class="grid-bg">
+<div class="app-shell" id="appRoot"></div>
+
+<script type="module">
+  import { renderShell } from "../js/appshell.js";
+  import { initShell, toast, updateUsagePill } from "../js/shell.js";
+  import { incrementUsage, canUse, getKeys } from "../js/firebase.js";
+
+  renderShell({ title: "Website Builder", page: "website" });
+  const { user, userData, limits } = await initShell("website");
+
+  let generatedCode = "";
+  let activeView = "preview"; // preview | code
+
+  document.getElementById("pageContent").innerHTML = `
+    <div class="webgen-layout">
+      <!-- Left: Input Panel -->
+      <div class="webgen-panel">
+        <div class="panel-header">
+          <h4>🌐 Describe Your Site</h4>
+        </div>
+        <div class="panel-body">
+          <textarea class="web-textarea" id="sitePrompt"
+            placeholder="e.g. A landing page for my bakery called Sweet Dreams. Include a hero with tagline, menu section with 4 items, about section, and contact form. Warm earthy colors, modern and clean design."></textarea>
+
+          <div style="margin:16px 0">
+            <p class="text-xs text-muted" style="letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Quick picks</p>
+            <div class="hint-chips" style="flex-wrap:wrap">
+              <span class="hint-chip" onclick="setPrompt('Portfolio for a creative photographer with dark aesthetic')">Portfolio</span>
+              <span class="hint-chip" onclick="setPrompt('Restaurant landing page with menu, gallery, reservations')">Restaurant</span>
+              <span class="hint-chip" onclick="setPrompt('Church website with events, sermons, and contact')">Church</span>
+              <span class="hint-chip" onclick="setPrompt('SaaS product landing page with features and pricing')">SaaS</span>
+              <span class="hint-chip" onclick="setPrompt('Personal brand / developer portfolio site')">Dev Portfolio</span>
+              <span class="hint-chip" onclick="setPrompt('E-commerce homepage for a clothing brand')">Store</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary w-full" id="genWebBtn" onclick="generateWebsite()" style="margin-top:8px">
+            ⚡ Generate Website
+          </button>
+
+          <div id="webStatus" style="display:none;margin-top:14px" class="webgen-status">
+            <div class="spinner" style="border-top-color:var(--accent);border-color:var(--border)"></div>
+            <span id="webStatusText">Generating…</span>
+          </div>
+        </div>
+
+        <!-- Code shown below on mobile -->
+        <div id="codeViewMobile" style="display:none;border-top:1px solid var(--border)">
+          <div class="panel-header">
+            <h4>Code</h4>
+            <div class="flex gap-8">
+              <button class="btn btn-ghost btn-sm" onclick="copyCode()">Copy</button>
+              <button class="btn btn-primary btn-sm" onclick="downloadSite()">Download</button>
+            </div>
+          </div>
+          <pre class="code-view" id="codeDisplay" style="height:260px;display:block"></pre>
+        </div>
+      </div>
+
+      <!-- Right: Preview Panel -->
+      <div class="webgen-panel">
+        <div class="panel-header">
+          <div class="preview-tabs">
+            <button class="preview-tab active" id="tabPreview" onclick="switchView('preview')">👁️ Preview</button>
+            <button class="preview-tab" id="tabCode" onclick="switchView('code')">📄 Code</button>
+          </div>
+          <div class="flex gap-8">
+            <button class="btn btn-ghost btn-sm" onclick="copyCode()">Copy</button>
+            <button class="btn btn-primary btn-sm" onclick="downloadSite()">⬇ Download</button>
+          </div>
+        </div>
+        <div class="preview-area" id="previewArea">
+          <iframe class="preview-frame" id="previewFrame"
+            srcdoc="<html><body style='background:#0d0d14;color:#5a5a7a;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;margin:0'><div><p style='font-size:2rem;margin-bottom:12px'>✨</p><p>Your website preview will appear here</p><p style='font-size:12px;margin-top:8px'>Describe your site and click Generate</p></div></body></html>">
+          </iframe>
+          <pre class="code-view" id="codeViewDesktop" style="display:none;height:100%"></pre>
+        </div>
+      </div>
+    </div>`;
+
+  window.setPrompt = t => { document.getElementById("sitePrompt").value = t; };
+
+  window.switchView = view => {
+    activeView = view;
+    document.getElementById("tabPreview").classList.toggle("active", view === "preview");
+    document.getElementById("tabCode").classList.toggle("active", view === "code");
+    document.getElementById("previewFrame").style.display     = view === "preview" ? "block" : "none";
+    document.getElementById("codeViewDesktop").style.display  = view === "code"    ? "block" : "none";
+  };
+
+  window.generateWebsite = async () => {
+    const prompt = document.getElementById("sitePrompt").value.trim();
+    if (!prompt) { toast("Describe your website first!", "error"); return; }
+    if (!canUse("websites", userData, limits)) {
+      toast("Daily website limit reached. Upgrade for unlimited!", "error"); return;
+    }
+
+    const btn    = document.getElementById("genWebBtn");
+    const status = document.getElementById("webStatus");
+    const stText = document.getElementById("webStatusText");
+    btn.disabled = true;
+    status.style.display = "flex";
+    stText.textContent   = "⚙️ MARXi is building your website…";
+
+    await incrementUsage(user.uid, "websites", userData);
+    updateUsagePill(userData, limits);
+
+    try {
+      const keys = await getKeys();
+      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + keys.gemini, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are an expert web developer and UI/UX designer.
+Generate a COMPLETE, BEAUTIFUL, PRODUCTION-READY single-file HTML website based on this brief:
+
+"${prompt}"
+
+Requirements:
+- Single HTML file with all CSS and JS embedded
+- Fully responsive and mobile-first
+- Smooth CSS animations and hover effects
+- Professional, modern design (NOT generic)
+- Complete sections as described
+- Working navigation with smooth scroll
+- Clean semantic HTML5
+- Google Fonts for typography
+- No placeholder lorem ipsum — use realistic content
+
+RETURN ONLY THE COMPLETE HTML CODE. No explanation, no markdown fences, just raw HTML starting with <!DOCTYPE html>`
+            }]
+          }],
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.8 }
+        })
+      });
+
+      const data = await res.json();
+      let code = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      code = code.replace(/```html\n?/gi,"").replace(/```\n?/g,"").trim();
+
+      if (!code.includes("<!DOCTYPE") && !code.includes("<html")) {
+        throw new Error("Invalid HTML returned");
+      }
+
+      generatedCode = code;
+      document.getElementById("previewFrame").srcdoc = code;
+      document.getElementById("codeViewDesktop").textContent = code;
+      document.getElementById("codeViewMobile").style.display = "block";
+      document.getElementById("codeDisplay").textContent = code;
+      switchView("preview");
+      stText.textContent = "✓ Website generated!";
+      toast("Website generated successfully!");
+    } catch(e) {
+      stText.textContent = "❌ Generation failed. Try again.";
+      toast("Generation failed: " + e.message, "error");
+    }
+
+    btn.disabled = false;
+    setTimeout(() => { status.style.display = "none"; }, 3000);
+  };
+
+  window.copyCode = () => {
+    if (!generatedCode) { toast("Generate a website first!", "error"); return; }
+    navigator.clipboard.writeText(generatedCode);
+    toast("Code copied to clipboard!");
+  };
+
+  window.downloadSite = () => {
+    if (!generatedCode) { toast("Generate a website first!", "error"); return; }
+    const a = document.createElement("a");
+    a.href = "data:text/html;charset=utf-8," + encodeURIComponent(generatedCode);
+    a.download = "marxi-website.html";
+    a.click();
+    toast("Downloading website…");
+  };
+</script>
+</body>
+</html>

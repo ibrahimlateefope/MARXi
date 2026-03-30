@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MARXi — The AI Agent Built Different</title>
+  <link rel="stylesheet" href="styles/global.css"/>
+  <link rel="stylesheet" href="styles/landing.css"/>
+</head>
+<body class="grid-bg">
+
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">MAR<span>Xi</span></div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="auth.html" class="btn btn-ghost btn-sm">Log In</a>
+      <a href="auth.html?mode=signup" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+    <button class="nav-mobile-btn" id="navMobileBtn">☰</button>
+  </div>
+  <div class="nav-mobile-menu" id="navMobileMenu">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="auth.html">Log In</a>
+    <a href="auth.html?mode=signup" class="btn btn-primary btn-sm" style="width:fit-content">Get Started</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-orb orb1"></div>
+  <div class="hero-orb orb2"></div>
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      Powered by Groq · Gemini · Pollinations
+    </div>
+    <h1 class="hero-title">
+      The AI Agent<br/>
+      <span class="gradient-text">Built Different.</span>
+    </h1>
+    <p class="hero-sub">
+      Chat, build websites, generate images and videos — all in one intelligent platform.
+      MARXi thinks before it acts.
+    </p>
+    <div class="hero-cta">
+      <a href="auth.html?mode=signup" class="btn btn-primary btn-lg">Start Free Today →</a>
+      <a href="auth.html" class="btn btn-ghost btn-lg">Sign In</a>
+    </div>
+    <!-- Terminal mockup -->
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="t-dots">
+          <span class="t-dot r"></span>
+          <span class="t-dot y"></span>
+          <span class="t-dot g"></span>
+        </div>
+        <span class="t-title">marxi — agent</span>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line" style="animation-delay:0.6s"><span class="t-prompt">›</span><span>Build me a landing page for my bakery</span></div>
+        <div class="t-line" style="animation-delay:1.1s"><span class="t-out">🧠 Improving prompt → generating full HTML/CSS/JS…</span></div>
+        <div class="t-line" style="animation-delay:1.6s"><span class="t-out">⚡ Adding hero, menu, contact form, animations…</span></div>
+        <div class="t-line" style="animation-delay:2.1s"><span class="t-out t-ok">✓ Done — Live preview ready. Download .zip →</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <p class="section-eyebrow">// What MARXi Can Do</p>
+    <h2 class="section-title">Every AI Tool.<br/>One Platform.</h2>
+    <p class="section-sub">From conversation to creation — MARXi handles it all.</p>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon">🧠</div>
+        <h3>Chat AI</h3>
+        <p>Context-aware conversations powered by Llama 3.3 70B via Groq. Blazing fast.</p>
+        <span class="badge badge-free">Free · 10/day</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">✨</div>
+        <h3>Prompt Engine</h3>
+        <p>Your prompts auto-improved before sending. Better outputs every time.</p>
+        <span class="badge badge-free">Free</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌐</div>
+        <h3>Website Builder</h3>
+        <p>Describe a site, get full responsive HTML/CSS/JS. Live preview + download.</p>
+        <span class="badge badge-free">Free · 2/day</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🖼️</div>
+        <h3>Image Generator</h3>
+        <p>Text to stunning images via Pollinations AI. No API key required.</p>
+        <span class="badge badge-free">Free · 3/day</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🎥</div>
+        <h3>Video Generator</h3>
+        <p>Turn prompts into short cinematic clips via Hugging Face inference.</p>
+        <span class="badge badge-paid">Pro Only</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📎</div>
+        <h3>File Uploads</h3>
+        <p>Drop a PDF or image — MARXi reads it and acts. "Build this from my brief."</p>
+        <span class="badge badge-paid">Pro Only</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing" id="pricing">
+  <div class="section-inner">
+    <p class="section-eyebrow">// Simple Pricing</p>
+    <h2 class="section-title">Start Free.<br/>Scale When Ready.</h2>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <p class="price-name">Free</p>
+        <div class="price-amount">₦0</div>
+        <p class="price-period">forever</p>
+        <ul class="price-list">
+          <li class="yes">10 AI chats per day</li>
+          <li class="yes">3 image generations/day</li>
+          <li class="yes">2 websites/day</li>
+          <li class="yes">Prompt improver</li>
+          <li class="no">Video generation</li>
+          <li class="no">File uploads</li>
+        </ul>
+        <a href="auth.html?mode=signup" class="btn btn-ghost w-full">Get Started Free</a>
+      </div>
+      <div class="price-card featured">
+        <div class="featured-badge">MOST POPULAR</div>
+        <p class="price-name">Pro</p>
+        <div class="price-amount">₦2,000</div>
+        <p class="price-period">per month</p>
+        <ul class="price-list">
+          <li class="yes">Unlimited chats</li>
+          <li class="yes">Unlimited images</li>
+          <li class="yes">Unlimited websites</li>
+          <li class="yes">Video generation</li>
+          <li class="yes">File & image uploads</li>
+          <li class="yes">Priority AI speed</li>
+        </ul>
+        <a href="auth.html?mode=signup&plan=pro" class="btn btn-primary w-full">Upgrade to Pro</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section-inner" style="text-align:center">
+    <h2 class="section-title" style="font-size:clamp(2rem,6vw,4rem)">Ready to build<br/>something real?</h2>
+    <p class="section-sub" style="margin:0 auto 40px">Join MARXi — the AI platform that ships.</p>
+    <a href="auth.html?mode=signup" class="btn btn-primary btn-lg">Launch MARXi Free →</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-logo">MAR<span>Xi</span></div>
+    <p>© 2025 MARXi. Built for creators who move fast.</p>
+  </div>
+</footer>
+
+<script>
+  // Mobile nav toggle
+  document.getElementById('navMobileBtn').addEventListener('click', () => {
+    document.getElementById('navMobileMenu').classList.toggle('open');
+  });
+  // Scroll reveal
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.feat-card, .price-card').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

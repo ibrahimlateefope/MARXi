@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MARXi — Image Generator</title>
+  <link rel="stylesheet" href="../styles/global.css"/>
+  <link rel="stylesheet" href="../styles/app.css"/>
+</head>
+<body class="grid-bg">
+<div class="app-shell" id="appRoot"></div>
+
+<script type="module">
+  import { renderShell } from "../js/appshell.js";
+  import { initShell, toast, updateUsagePill } from "../js/shell.js";
+  import { incrementUsage, canUse, KEYS } from "../js/firebase.js";
+
+  renderShell({ title: "Image Generator", page: "image" });
+  const { user, userData, limits } = await initShell("image");
+
+  let lastPrompt = "";
+
+  document.getElementById("pageContent").innerHTML = `
+    <div class="gen-wrap">
+      <div class="gen-card">
+        <h2>🖼️ Image Generator</h2>
+        <p class="desc">Describe any image and MARXi creates it instantly. Add style keywords for best results.</p>
+
+        <div class="form-group">
+          <label class="input-label">Image Description</label>
+          <textarea class="input" id="imgPrompt" rows="3"
+            style="resize:vertical"
+            placeholder="e.g. A futuristic city at night, neon lights, rain-soaked streets, cinematic, 4K ultra detailed"></textarea>
+        </div>
+
+        <div style="margin-bottom:18px">
+          <p class="text-xs text-muted" style="letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Style Presets</p>
+          <div class="style-chips">
+            <span class="hint-chip" onclick="addStyle('photorealistic, 8K')">📷 Photorealistic</span>
+            <span class="hint-chip" onclick="addStyle('anime style, vibrant')">🎌 Anime</span>
+            <span class="hint-chip" onclick="addStyle('oil painting, impressionist')">🎨 Oil Paint</span>
+            <span class="hint-chip" onclick="addStyle('digital art, trending on artstation')">💻 Digital Art</span>
+            <span class="hint-chip" onclick="addStyle('cinematic lighting, dramatic')">🎬 Cinematic</span>
+            <span class="hint-chip" onclick="addStyle('watercolor, soft pastel')">🌸 Watercolor</span>
+            <span class="hint-chip" onclick="addStyle('3D render, octane render')">🔷 3D Render</span>
+            <span class="hint-chip" onclick="addStyle('pencil sketch, detailed')">✏️ Sketch</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" id="genImgBtn" onclick="generateImage()" style="flex:1;min-width:160px">
+            🖼️ Generate Image
+          </button>
+          <button class="btn btn-ghost" id="regenBtn" onclick="regenerate()" style="display:none">
+            🔄 Regenerate
+          </button>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div class="image-result" id="imageResult" style="display:none">
+        <div class="img-loading" id="imgLoading">
+          <div class="img-loading-ring"></div>
+          <span>Generating your image…</span>
+        </div>
+        <img id="generatedImg" src="" alt="Generated image" style="display:none"
+          onload="imgLoaded()" onerror="imgFailed()"/>
+        <div class="image-result-actions" id="imgActions" style="display:none">
+          <button class="btn btn-primary btn-sm" onclick="downloadImg()">⬇ Download</button>
+          <button class="btn btn-ghost btn-sm" onclick="regenerate()">🔄 Regenerate</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendToChat()">💬 Discuss in Chat</button>
+        </div>
+      </div>
+    </div>`;
+
+  window.addStyle = s => {
+    const el = document.getElementById("imgPrompt");
+    const current = el.value.trim();
+    el.value = current ? current + ", " + s : s;
+    el.focus();
+  };
+
+  window.generateImage = async () => {
+    const prompt = document.getElementById("imgPrompt").value.trim();
+    if (!prompt) { toast("Describe the image first!", "error"); return; }
+    if (!canUse("images", userData, limits)) {
+      toast("Daily image limit reached. Upgrade for unlimited!", "error"); return;
+    }
+
+    lastPrompt = prompt;
+    await incrementUsage(user.uid, "images", userData);
+    updateUsagePill(userData, limits);
+    renderImage(prompt);
+  };
+
+  function renderImage(prompt) {
+    const result  = document.getElementById("imageResult");
+    const loading = document.getElementById("imgLoading");
+    const img     = document.getElementById("generatedImg");
+    const actions = document.getElementById("imgActions");
+    const btn     = document.getElementById("genImgBtn");
+
+    result.style.display  = "block";
+    loading.style.display = "flex";
+    img.style.display     = "none";
+    actions.style.display = "none";
+    btn.disabled          = true;
+
+    const seed    = Math.floor(Math.random() * 999999);
+    const encoded = encodeURIComponent(prompt + ", high quality, detailed, sharp");
+    img.src = `https://image.pollinations.ai/prompt/${encoded}?width=896&height=560&seed=${seed}&nologo=true&enhance=true`;
+  }
+
+  window.imgLoaded = () => {
+    document.getElementById("imgLoading").style.display  = "none";
+    document.getElementById("generatedImg").style.display = "block";
+    document.getElementById("imgActions").style.display   = "flex";
+    document.getElementById("genImgBtn").disabled         = false;
+    document.getElementById("regenBtn").style.display     = "block";
+    toast("Image generated!");
+  };
+
+  window.imgFailed = () => {
+    document.getElementById("imgLoading").innerHTML = `<span style="color:var(--accent3)">❌ Generation failed. Try a different prompt.</span>`;
+    document.getElementById("genImgBtn").disabled = false;
+    toast("Image failed. Try again.", "error");
+  };
+
+  window.regenerate = () => {
+    if (!lastPrompt) return;
+    renderImage(lastPrompt);
+  };
+
+  window.downloadImg = () => {
+    const img = document.getElementById("generatedImg");
+    if (!img.src) return;
+    const a = document.createElement("a");
+    a.href = img.src; a.download = "marxi-image.jpg";
+    a.target = "_blank"; a.click();
+    toast("Opening image for download…");
+  };
+
+  window.sendToChat = () => {
+    sessionStorage.setItem("chatPrefill", `I just generated this image: "${lastPrompt}" — can you describe what it might look like and suggest improvements?`);
+    location.href = "chat.html";
+  };
+</script>
+</body>
+</html>

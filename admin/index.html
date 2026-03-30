@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MARXi Admin</title>
+  <link rel="stylesheet" href="../styles/global.css"/>
+  <link rel="stylesheet" href="../styles/admin.css"/>
+</head>
+<body class="grid-bg">
+
+<!-- Gate (shown until auth confirmed) -->
+<div id="gate" class="gate-wrap">
+  <div class="gate-card">
+    <div style="font-size:2.5rem;margin-bottom:16px">🔐</div>
+    <h2>Admin Access</h2>
+    <p>Sign in with your admin account.</p>
+    <div id="gateMsg" class="gate-msg"></div>
+    <div class="form-group">
+      <label class="input-label">Email</label>
+      <input class="input" type="email" id="adminEmail" placeholder="admin@marxi.ai"/>
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label class="input-label">Password</label>
+      <input class="input" type="password" id="adminPass" placeholder="••••••••"/>
+    </div>
+    <button class="btn btn-primary w-full" onclick="adminLogin()" style="padding:13px">Enter Panel</button>
+    <p style="margin-top:14px;font-size:0.72rem;color:var(--muted)">All access attempts are logged.</p>
+  </div>
+</div>
+
+<!-- Admin panel (hidden until auth) -->
+<div id="panel" class="admin-shell" style="display:none">
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">MAR<span>Xi</span></div>
+      <div style="font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent3);margin-top:2px">Admin</div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('overview')"   id="nav-overview">  <span class="nav-icon">📊</span><span class="nav-label">Overview</span></button>
+      <button class="nav-item" onclick="showPage('plans')"     id="nav-plans">     <span class="nav-icon">💰</span><span class="nav-label">Plans & Limits</span></button>
+      <button class="nav-item" onclick="showPage('features')"  id="nav-features">  <span class="nav-icon">⚙️</span><span class="nav-label">Features</span></button>
+      <button class="nav-item" onclick="showPage('users')"     id="nav-users">     <span class="nav-icon">👥</span><span class="nav-label">Users</span></button>
+      <button class="nav-item" onclick="showPage('models')"    id="nav-models">    <span class="nav-icon">🧠</span><span class="nav-label">AI Models</span></button>
+      <button class="nav-item" onclick="showPage('keys')"      id="nav-keys">      <span class="nav-icon">🔑</span><span class="nav-label">API Keys</span></button>
+      <button class="nav-item" onclick="adminLogout()">                             <span class="nav-icon">🚪</span><span class="nav-label">Sign Out</span></button>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <!-- Overview -->
+    <div class="apage active" id="page-overview">
+      <h1 class="apage-title">Overview</h1>
+      <div class="stats-row" id="statsRow">
+        <div class="stat-box"><div class="stat-box-label">Total Users</div><div class="stat-box-val" id="s-total">—</div></div>
+        <div class="stat-box"><div class="stat-box-label">Pro Users</div><div class="stat-box-val" id="s-pro" style="color:var(--accent)">—</div></div>
+        <div class="stat-box"><div class="stat-box-label">Free Users</div><div class="stat-box-val" id="s-free">—</div></div>
+        <div class="stat-box"><div class="stat-box-label">Est. Revenue</div><div class="stat-box-val" id="s-rev" style="color:var(--green)">—</div></div>
+      </div>
+      <div class="acard">
+        <h3>Recent Users</h3>
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="recentTbl"><tr><td colspan="5" class="tbl-empty">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plans -->
+    <div class="apage" id="page-plans">
+      <h1 class="apage-title">Plans & Limits</h1>
+      <p class="apage-sub">Set daily usage limits per plan. Changes apply immediately to all users.</p>
+      <div class="plan-grid">
+        <div class="acard">
+          <h3>🟢 Free Plan</h3>
+          <div class="form-group"><label class="input-label">Daily Chats</label><input class="input" type="number" id="free_chats" value="10" min="0"/></div>
+          <div class="form-group"><label class="input-label">Daily Images</label><input class="input" type="number" id="free_images" value="3" min="0"/></div>
+          <div class="form-group"><label class="input-label">Daily Websites</label><input class="input" type="number" id="free_websites" value="2" min="0"/></div>
+          <div class="form-group"><label class="input-label">Videos (always 0)</label><input class="input" type="number" value="0" disabled style="opacity:0.4"/></div>
+        </div>
+        <div class="acard" style="border-color:rgba(0,229,255,0.2)">
+          <h3>⭐ Pro Plan</h3>
+          <div class="form-group"><label class="input-label">Monthly Price (₦)</label><input class="input" type="number" id="pro_price" value="2000" min="100"/></div>
+          <div class="form-group"><label class="input-label">Daily Chats</label><input class="input" type="number" id="pro_chats" value="9999"/></div>
+          <div class="form-group"><label class="input-label">Daily Images</label><input class="input" type="number" id="pro_images" value="9999"/></div>
+          <div class="form-group"><label class="input-label">Daily Websites</label><input class="input" type="number" id="pro_websites" value="9999"/></div>
+          <div class="form-group"><label class="input-label">Daily Videos</label><input class="input" type="number" id="pro_videos" value="30"/></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="savePlans()">💾 Save Plan Settings</button>
+    </div>
+
+    <!-- Features -->
+    <div class="apage" id="page-features">
+      <h1 class="apage-title">Feature Controls</h1>
+      <p class="apage-sub">Enable or disable features globally in real-time.</p>
+      <div class="acard" style="margin-bottom:20px">
+        <h3>Global Features</h3>
+        <div id="featureList"></div>
+        <button class="btn btn-primary" style="margin-top:20px" onclick="saveFeatures()">💾 Save Features</button>
+      </div>
+      <div class="acard">
+        <h3>📢 Platform Announcement</h3>
+        <p style="color:var(--muted);font-size:0.8rem;margin-bottom:14px">Show a banner to all users inside the app.</p>
+        <div class="form-group">
+          <textarea class="input" id="announceTxt" rows="2" placeholder="e.g. 🎉 Video generation is now live!"></textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary btn-sm" onclick="saveAnnouncement()">Send</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearAnnouncement()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="apage" id="page-users">
+      <h1 class="apage-title">User Management</h1>
+      <div class="acard" style="margin-bottom:16px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <input class="input" type="text" id="userSearch" placeholder="Search name or email…" style="flex:1;min-width:200px" oninput="searchUsers(this.value)"/>
+          <select class="input" id="planFilter" style="width:160px" onchange="filterByPlan()">
+            <option value="">All Plans</option>
+            <option value="free">Free</option>
+            <option value="pro">Pro</option>
+          </select>
+        </div>
+      </div>
+      <div class="acard">
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Chats</th><th>Images</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="usersTbl"><tr><td colspan="7" class="tbl-empty">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Keys -->
+    <div class="apage" id="page-keys">
+      <h1 class="apage-title">API Keys</h1>
+      <p class="apage-sub">Keys are saved to Firestore and loaded at runtime. They never appear in your code or GitHub.</p>
+      <div class="acard">
+        <h3>🔑 AI Service Keys</h3>
+        <div class="form-group">
+          <label class="input-label">Groq API Key (Chat AI)</label>
+          <input class="input" type="password" id="key_groq" placeholder="gsk_..."/>
+          <p style="font-size:0.68rem;color:var(--muted);margin-top:5px">Get free at: console.groq.com</p>
+        </div>
+        <div class="form-group">
+          <label class="input-label">Google Gemini Key (Website Builder)</label>
+          <input class="input" type="password" id="key_gemini" placeholder="AIza..."/>
+          <p style="font-size:0.68rem;color:var(--muted);margin-top:5px">Get free at: aistudio.google.com</p>
+        </div>
+        <div class="form-group" style="margin-bottom:24px">
+          <label class="input-label">HuggingFace Token (Video Gen)</label>
+          <input class="input" type="password" id="key_hf" placeholder="hf_..."/>
+          <p style="font-size:0.68rem;color:var(--muted);margin-top:5px">Get free at: huggingface.co/settings/tokens</p>
+        </div>
+        <button class="btn btn-primary" onclick="saveKeys()">💾 Save Keys to Firestore</button>
+        <div style="margin-top:16px;padding:14px;background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);border-radius:var(--radius-sm)">
+          <p style="font-size:0.75rem;color:var(--accent);margin-bottom:6px">✓ Why this is safe</p>
+          <p style="font-size:0.72rem;color:var(--muted);line-height:1.7">Keys are stored in Firestore <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px">config/keys</code> doc, which only authenticated users can read. They never appear in your GitHub code.</p>
+        </div>
+      </div>
+
+      <div class="acard" style="margin-top:0">
+        <h3>🔥 Firebase Config</h3>
+        <p style="color:var(--muted);font-size:0.8rem;line-height:1.7;margin-bottom:18px">
+          Paste your Firebase config below. These values replace the placeholders in <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px">js/firebase.js</code>. Firebase client config is <strong style="color:var(--text)">not a secret</strong> — it just identifies your project. Your Firestore Rules protect actual data.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group">
+            <label class="input-label">API Key</label>
+            <input class="input" type="text" id="fb_apiKey" placeholder="AIza..."/>
+          </div>
+          <div class="form-group">
+            <label class="input-label">Auth Domain</label>
+            <input class="input" type="text" id="fb_authDomain" placeholder="project.firebaseapp.com"/>
+          </div>
+          <div class="form-group">
+            <label class="input-label">Project ID</label>
+            <input class="input" type="text" id="fb_projectId" placeholder="your-project-id"/>
+          </div>
+          <div class="form-group">
+            <label class="input-label">Storage Bucket</label>
+            <input class="input" type="text" id="fb_storageBucket" placeholder="project.appspot.com"/>
+          </div>
+          <div class="form-group">
+            <label class="input-label">Messaging Sender ID</label>
+            <input class="input" type="text" id="fb_senderId" placeholder="123456789"/>
+          </div>
+          <div class="form-group">
+            <label class="input-label">App ID</label>
+            <input class="input" type="text" id="fb_appId" placeholder="1:xxx:web:xxx"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="copyFirebaseSnippet()">📋 Copy Updated firebase.js Snippet</button>
+      </div>
+    </div>
+
+    <!-- Models -->
+    <div class="apage" id="page-models">      <h1 class="apage-title">AI Model Config</h1>
+      <p class="apage-sub">Choose which models power each feature.</p>
+      <div class="acard">
+        <div class="form-group">
+          <label class="input-label">Chat AI Model</label>
+          <select class="input" id="chatModel">
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Groq — Recommended)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Groq — Fastest)</option>
+            <option value="mixtral-8x7b-32768">Mixtral 8x7B (Groq)</option>
+            <option value="gemma2-9b-it">Gemma 2 9B (Groq)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="input-label">Website Generator Model</label>
+          <select class="input" id="websiteModel">
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash (Google — Best)</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Google)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="input-label">Max Tokens Per Response</label>
+          <input class="input" type="number" id="maxTokens" value="1500" min="200" max="8000"/>
+        </div>
+        <div class="form-group">
+          <label class="input-label">System Prompt (Chat)</label>
+          <textarea class="input" id="systemPrompt" rows="4">You are MARXi, an advanced AI assistant. You are helpful, precise, and creative. When writing code always use markdown code blocks. Be concise and action-oriented.</textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveModels()">💾 Save Model Config</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  const ADMIN_EMAIL = "YOUR_ADMIN_EMAIL"; // 🔧 Replace with your email
+
+  const app  = initializeApp({
+    apiKey: "AIzaSyBVBQEPnYOTbkkfPKAqO6aYnVs29GSpId8",
+    authDomain: "marxi-b1562.firebaseapp.com",
+    projectId: "marxi-b1562",
+    storageBucket: "marxi-b1562.firebasestorage.app",
+    messagingSenderId: "702306346639",
+    appId: "1:702306346639:web:01a30dc5f19f0751e172fa"
+  });
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  let allUsers = [];
+
+  function toast(msg, type = "success") {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.className = type === "error" ? "error show" : "show";
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.className = "", 3000);
+  }
+
+  onAuthStateChanged(auth, async user => {
+    if (user && user.email === ADMIN_EMAIL) {
+      document.getElementById("gate").style.display  = "none";
+      document.getElementById("panel").style.display = "flex";
+      await loadAll();
+    } else if (user) {
+      const gMsg = document.getElementById("gateMsg");
+      gMsg.textContent = "Access denied. Admin only.";
+      gMsg.className = "gate-msg show error";
+      await signOut(auth);
+    }
+  });
+
+  window.adminLogin = async () => {
+    const email = document.getElementById("adminEmail").value;
+    const pass  = document.getElementById("adminPass").value;
+    const gMsg  = document.getElementById("gateMsg");
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch(e) {
+      gMsg.textContent = "Login failed: " + e.message;
+      gMsg.className = "gate-msg show error";
+    }
+  };
+  window.adminLogout = async () => { await signOut(auth); location.reload(); };
+
+  window.showPage = name => {
+    document.querySelectorAll(".apage").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+    document.getElementById("page-"+name).classList.add("active");
+    document.getElementById("nav-"+name)?.classList.add("active");
+  };
+
+  async function loadAll() {
+    await loadUsers();
+    await loadConfig();
+    renderFeatures();
+  }
+
+  async function loadUsers() {
+    const snap = await getDocs(collection(db, "users"));
+    allUsers = [];
+    snap.forEach(d => allUsers.push(d.data()));
+
+    const pro  = allUsers.filter(u => u.plan === "pro");
+    const free = allUsers.filter(u => u.plan !== "pro");
+    document.getElementById("s-total").textContent = allUsers.length;
+    document.getElementById("s-pro").textContent   = pro.length;
+    document.getElementById("s-free").textContent  = free.length;
+    document.getElementById("s-rev").textContent   = "₦" + (pro.length * 2000).toLocaleString();
+
+    renderUsersTable(allUsers.slice(0, 8), "recentTbl", true);
+    renderUsersTable(allUsers, "usersTbl", false);
+  }
+
+  function renderUsersTable(users, id, compact) {
+    const tbody = document.getElementById(id);
+    if (!users.length) { tbody.innerHTML = `<tr><td colspan="7" class="tbl-empty">No users found</td></tr>`; return; }
+    tbody.innerHTML = users.map(u => {
+      const date = u.createdAt?.toDate?.()?.toLocaleDateString() || "—";
+      return `<tr>
+        <td>${u.name||"—"}</td>
+        <td class="text-muted">${u.email||"—"}</td>
+        <td><span class="badge badge-${u.plan||"free"}">${u.plan||"free"}</span></td>
+        ${!compact?`<td>${u.usage?.chats||0}</td><td>${u.usage?.images||0}</td>`:""}
+        <td class="text-muted">${date}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          ${(u.plan||"free")==="free"
+            ? `<button class="btn btn-ghost btn-sm" onclick="upgradePlan('${u.uid}','pro')">→ Pro</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="upgradePlan('${u.uid}','free')">→ Free</button>`}
+        </td>
+      </tr>`;
+    }).join("");
+  }
+
+  window.upgradePlan = async (uid, plan) => {
+    await updateDoc(doc(db, "users", uid), { plan });
+    toast(`✓ Plan updated to ${plan}`);
+    await loadUsers();
+  };
+
+  window.searchUsers    = q => renderUsersTable(allUsers.filter(u => (u.email||"").toLowerCase().includes(q.toLowerCase()) || (u.name||"").toLowerCase().includes(q.toLowerCase())), "usersTbl", false);
+  window.filterByPlan   = () => { const p = document.getElementById("planFilter").value; renderUsersTable(p ? allUsers.filter(u => (u.plan||"free")===p) : allUsers, "usersTbl", false); };
+
+  async function loadConfig() {
+    try {
+      const planSnap = await getDoc(doc(db, "config", "plans"));
+      if (planSnap.exists()) {
+        const d = planSnap.data();
+        ["chats","images","websites"].forEach(k => {
+          if (d.free?.[k] !== undefined) document.getElementById("free_"+k).value = d.free[k];
+          if (d.pro?.[k]  !== undefined) document.getElementById("pro_"+k).value  = d.pro[k];
+        });
+        if (d.pro?.videos) document.getElementById("pro_videos").value = d.pro.videos;
+        if (d.pro?.price)  document.getElementById("pro_price").value  = d.pro.price;
+      }
+      const modelSnap = await getDoc(doc(db, "config", "models"));
+      if (modelSnap.exists()) {
+        const m = modelSnap.data();
+        if (m.chat)         document.getElementById("chatModel").value    = m.chat;
+        if (m.website)      document.getElementById("websiteModel").value = m.website;
+        if (m.maxTokens)    document.getElementById("maxTokens").value    = m.maxTokens;
+        if (m.systemPrompt) document.getElementById("systemPrompt").value = m.systemPrompt;
+      }
+      const featSnap = await getDoc(doc(db, "config", "features"));
+      window._featureState = featSnap.exists() ? featSnap.data() : {};
+    } catch(e) { console.error("Config load:", e); }
+  }
+
+  const FEATURE_DEFS = [
+    { id:"chat",         label:"Chat AI",          desc:"Main conversational AI" },
+    { id:"websiteGen",   label:"Website Generator", desc:"Gemini-powered site builder" },
+    { id:"imageGen",     label:"Image Generation",  desc:"Pollinations text-to-image" },
+    { id:"videoGen",     label:"Video Generation",  desc:"HuggingFace video (Pro)" },
+    { id:"fileUpload",   label:"File Uploads",      desc:"PDF & image analysis (Pro)" },
+    { id:"googleLogin",  label:"Google Login",      desc:"Allow Google OAuth" },
+  ];
+
+  function renderFeatures() {
+    const state = window._featureState || {};
+    document.getElementById("featureList").innerHTML = FEATURE_DEFS.map(f => `
+      <div class="feat-toggle-row">
+        <div><div class="toggle-label">${f.label}</div><div class="toggle-desc">${f.desc}</div></div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="feat_${f.id}" ${state[f.id]!==false?"checked":""}/>
+          <span class="switch-track"></span>
+        </label>
+      </div>`).join("");
+  }
+
+  window.savePlans = async () => {
+    await setDoc(doc(db, "config", "plans"), {
+      free: { chats:+document.getElementById("free_chats").value, images:+document.getElementById("free_images").value, websites:+document.getElementById("free_websites").value, videos:0 },
+      pro:  { chats:+document.getElementById("pro_chats").value, images:+document.getElementById("pro_images").value, websites:+document.getElementById("pro_websites").value, videos:+document.getElementById("pro_videos").value, price:+document.getElementById("pro_price").value }
+    });
+    toast("✓ Plans saved!");
+  };
+
+  window.saveFeatures = async () => {
+    const obj = {};
+    FEATURE_DEFS.forEach(f => { obj[f.id] = document.getElementById("feat_"+f.id).checked; });
+    await setDoc(doc(db, "config", "features"), obj);
+    toast("✓ Features saved!");
+  };
+
+  window.saveModels = async () => {
+    await setDoc(doc(db, "config", "models"), {
+      chat:         document.getElementById("chatModel").value,
+      website:      document.getElementById("websiteModel").value,
+      maxTokens:    +document.getElementById("maxTokens").value,
+      systemPrompt: document.getElementById("systemPrompt").value
+    });
+    toast("✓ Models saved!");
+  };
+
+  window.saveKeys = async () => {
+    const groq   = document.getElementById("key_groq").value.trim();
+    const gemini = document.getElementById("key_gemini").value.trim();
+    const hf     = document.getElementById("key_hf").value.trim();
+    if (!groq && !gemini && !hf) { toast("Enter at least one key", "error"); return; }
+    const payload = {};
+    if (groq)   payload.groq   = groq;
+    if (gemini) payload.gemini = gemini;
+    if (hf)     payload.hf     = hf;
+    await setDoc(doc(db, "config", "keys"), payload, { merge: true });
+    // Clear inputs after saving
+    ["key_groq","key_gemini","key_hf"].forEach(id => document.getElementById(id).value = "");
+    toast("✓ Keys saved to Firestore!");
+  };
+
+  window.copyFirebaseSnippet = () => {
+    const cfg = {
+      apiKey:            document.getElementById("fb_apiKey").value.trim(),
+      authDomain:        document.getElementById("fb_authDomain").value.trim(),
+      projectId:         document.getElementById("fb_projectId").value.trim(),
+      storageBucket:     document.getElementById("fb_storageBucket").value.trim(),
+      messagingSenderId: document.getElementById("fb_senderId").value.trim(),
+      appId:             document.getElementById("fb_appId").value.trim(),
+    };
+    const snippet = `const firebaseConfig = ${JSON.stringify(cfg, null, 2)};`;
+    navigator.clipboard.writeText(snippet);
+    toast("✓ Firebase config copied! Paste into js/firebase.js");
+  };
+    const text = document.getElementById("announceTxt").value;
+    await setDoc(doc(db, "config", "announcement"), { text, active: !!text, updatedAt: new Date().toISOString() });
+    toast("✓ Announcement sent!");
+  };
+  window.clearAnnouncement = async () => {
+    await setDoc(doc(db, "config", "announcement"), { text:"", active:false });
+    document.getElementById("announceTxt").value = "";
+    toast("Announcement cleared");
+  };
+</script>
+</body>
+</html>

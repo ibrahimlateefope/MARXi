@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MARXi — Video Generator</title>
+  <link rel="stylesheet" href="../styles/global.css"/>
+  <link rel="stylesheet" href="../styles/app.css"/>
+</head>
+<body class="grid-bg">
+<div class="app-shell" id="appRoot"></div>
+
+<script type="module">
+  import { renderShell } from "../js/appshell.js";
+  import { initShell, toast, updateUsagePill } from "../js/shell.js";
+  import { incrementUsage, canUse, KEYS } from "../js/firebase.js";
+
+  renderShell({ title: "Video Generator", page: "video" });
+  const { user, userData, limits } = await initShell("video");
+
+  const isPro = userData.plan === "pro";
+
+  document.getElementById("pageContent").innerHTML = isPro
+    ? proUI()
+    : lockedUI();
+
+  function lockedUI() {
+    return `
+      <div class="locked-view">
+        <div class="lock-icon">🎥</div>
+        <h3>Video Generation</h3>
+        <p>Turn text descriptions or images into cinematic short video clips (5–10 seconds) powered by Hugging Face AI models.</p>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;max-width:400px;width:100%;margin-bottom:24px">
+          <p class="text-xs text-muted" style="letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Pro Features</p>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:10px">
+            ${["Unlimited AI chats","Unlimited image generation","Unlimited website builds","Video generation","File & image uploads"].map(f=>`
+              <li style="display:flex;align-items:center;gap:10px;font-size:0.8rem">
+                <span style="color:var(--accent)">✓</span> ${f}
+              </li>`).join("")}
+          </ul>
+          <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+            <div style="font-family:var(--font-head);font-size:2rem;font-weight:800;margin-bottom:4px">₦2,000</div>
+            <div style="color:var(--muted);font-size:0.74rem">per month</div>
+          </div>
+        </div>
+        <a href="dashboard.html" class="btn btn-primary btn-lg">⚡ Upgrade to Pro</a>
+      </div>`;
+  }
+
+  function proUI() {
+    return `
+      <div class="gen-wrap">
+        <div class="gen-card">
+          <h2>🎥 Video Generator</h2>
+          <p class="desc">Describe a scene and MARXi generates a short cinematic video clip via Hugging Face. Generation takes 1–3 minutes.</p>
+
+          <div class="form-group">
+            <label class="input-label">Scene Description</label>
+            <textarea class="input" id="videoPrompt" rows="3" style="resize:vertical"
+              placeholder="e.g. A drone flying over a tropical beach at golden hour, slow motion, cinematic, 4K quality"></textarea>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <p class="text-xs text-muted" style="letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Scene Presets</p>
+            <div class="style-chips">
+              <span class="hint-chip" onclick="setScene('Drone shot over tropical beach at sunset, cinematic')">🏖️ Beach Drone</span>
+              <span class="hint-chip" onclick="setScene('City timelapse at night, neon lights, rain')">🌆 City Night</span>
+              <span class="hint-chip" onclick="setScene('Close-up of blooming flower in slow motion')">🌸 Slow Motion</span>
+              <span class="hint-chip" onclick="setScene('Ocean waves crashing on rocks, dramatic storm')">🌊 Ocean Storm</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary w-full" id="genVideoBtn" onclick="generateVideo()">
+            🎥 Generate Video
+          </button>
+
+          <div id="videoStatus" style="display:none;margin-top:16px;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <div class="spinner" style="border-top-color:var(--accent);border-color:var(--border)"></div>
+              <span id="videoStatusText" style="font-size:0.82rem">Starting generation…</span>
+            </div>
+            <div style="background:rgba(255,255,255,0.06);border-radius:100px;height:4px;overflow:hidden">
+              <div id="videoProgress" style="height:100%;background:var(--accent);border-radius:100px;width:0%;transition:width 0.5s ease"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="video-result" id="videoResult" style="display:none;margin-top:20px">
+          <video id="videoEl" controls style="width:100%;border-radius:var(--radius-lg);background:#000;max-height:400px"></video>
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="downloadVideo()">⬇ Download</button>
+            <button class="btn btn-ghost btn-sm" onclick="shareVideo()">🔗 Share URL</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  window.setScene = t => { document.getElementById("videoPrompt").value = t; };
+
+  window.generateVideo = async () => {
+    const prompt = document.getElementById("videoPrompt")?.value.trim();
+    if (!prompt) { toast("Describe your video scene first!", "error"); return; }
+    if (!canUse("videos", userData, limits)) {
+      toast("Daily video limit reached.", "error"); return;
+    }
+
+    const btn      = document.getElementById("genVideoBtn");
+    const status   = document.getElementById("videoStatus");
+    const statusTx = document.getElementById("videoStatusText");
+    const progress = document.getElementById("videoProgress");
+
+    btn.disabled = true;
+    status.style.display = "block";
+
+    await incrementUsage(user.uid, "videos", userData);
+    updateUsagePill(userData, limits);
+
+    // Simulate progress while waiting
+    let pct = 0;
+    const ticker = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 3, 85);
+      progress.style.width = pct + "%";
+    }, 1500);
+
+    const stages = [
+      "Starting generation…",
+      "Loading AI model…",
+      "Processing your scene…",
+      "Rendering frames…",
+      "Finalising video…"
+    ];
+    let stageIdx = 0;
+    const stageTicker = setInterval(() => {
+      stageIdx = Math.min(stageIdx + 1, stages.length - 1);
+      statusTx.textContent = stages[stageIdx];
+    }, 20000);
+
+    try {
+      // Call Vercel serverless function (api/video.js) which wraps HuggingFace
+      const res = await fetch("/api/video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, hfKey: KEYS.hf })
+      });
+      const data = await res.json();
+      clearInterval(ticker); clearInterval(stageTicker);
+
+      if (data.url) {
+        progress.style.width = "100%";
+        statusTx.textContent = "✓ Video ready!";
+        document.getElementById("videoEl").src = data.url;
+        document.getElementById("videoResult").style.display = "block";
+        setTimeout(() => { status.style.display = "none"; }, 2000);
+        toast("Video generated!");
+      } else {
+        throw new Error(data.error || "No video returned");
+      }
+    } catch(e) {
+      clearInterval(ticker); clearInterval(stageTicker);
+      statusTx.textContent = "❌ Generation failed. Try again.";
+      progress.style.background = "var(--accent3)";
+      toast("Video failed: " + e.message, "error");
+    }
+    btn.disabled = false;
+  };
+
+  window.downloadVideo = () => {
+    const v = document.getElementById("videoEl");
+    if (!v?.src) return;
+    const a = document.createElement("a"); a.href = v.src; a.download = "marxi-video.mp4"; a.click();
+  };
+
+  window.shareVideo = () => {
+    const v = document.getElementById("videoEl");
+    if (!v?.src) return;
+    navigator.clipboard.writeText(v.src);
+    toast("Video URL copied!");
+  };
+</script>
+</body>
+</html>

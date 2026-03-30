@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MARXi — Dashboard</title>
+  <link rel="stylesheet" href="../styles/global.css"/>
+  <link rel="stylesheet" href="../styles/app.css"/>
+</head>
+<body class="grid-bg">
+<div class="app-shell" id="appRoot"></div>
+
+<script type="module">
+  import { renderShell } from "../js/appshell.js";
+  import { initShell, toast } from "../js/shell.js";
+
+  renderShell({ title: "Dashboard", page: "dashboard" });
+  const { user, userData, limits } = await initShell("dashboard");
+
+  const plan  = userData.plan || "free";
+  const usage = userData.usage || {};
+  const lim   = limits[plan] || {};
+  const isPro = plan === "pro";
+
+  function pct(used, max) { return max > 0 ? Math.min(100, Math.round((used / max) * 100)) : 0; }
+  function warn(used, max) { return pct(used, max) >= 80; }
+
+  document.getElementById("pageContent").innerHTML = `
+    <div style="max-width:900px;margin:0 auto">
+      <p class="text-xs text-muted" style="letter-spacing:3px;text-transform:uppercase;margin-bottom:6px">// Account Overview</p>
+      <h2 style="font-family:var(--font-head);font-size:1.6rem;margin-bottom:28px">Welcome back, ${user.displayName?.split(" ")[0] || "there"} 👋</h2>
+
+      <!-- Plan badge -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;flex-wrap:wrap">
+        <div style="background:var(--card);border:1px solid ${isPro?'rgba(0,229,255,0.3)':'var(--border)'};border-radius:var(--radius-lg);padding:16px 24px;display:flex;align-items:center;gap:14px">
+          <span style="font-size:1.5rem">${isPro?"⭐":"🟢"}</span>
+          <div>
+            <div style="font-family:var(--font-head);font-size:0.85rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${isPro?'var(--accent)':'var(--text2)'}">${plan} Plan</div>
+            <div class="text-xs text-muted">${isPro?"Unlimited access — all features unlocked":"Limited daily usage"}</div>
+          </div>
+          ${!isPro?`<a href="#upgrade" class="btn btn-primary btn-sm" style="margin-left:8px">⚡ Upgrade</a>`:""}
+        </div>
+      </div>
+
+      <!-- Usage stats -->
+      <p class="text-xs text-muted" style="letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">Today's Usage</p>
+      <div class="dash-grid" style="margin-bottom:32px">
+        ${[
+          { icon:"🧠", label:"AI Chats", key:"chats" },
+          { icon:"🖼️", label:"Images", key:"images" },
+          { icon:"🌐", label:"Websites", key:"websites" },
+          { icon:"🎥", label:"Videos", key:"videos" }
+        ].map(s => {
+          const used = usage[s.key] || 0;
+          const max  = lim[s.key]  || 0;
+          const isWarn = warn(used, max);
+          const isUnlim = max >= 9999;
+          return `
+          <div class="stat-card">
+            <div class="stat-icon">${s.icon}</div>
+            <div class="stat-label">${s.label}</div>
+            <div class="stat-value">${used}</div>
+            <div class="stat-sub">${isUnlim ? "Unlimited" : `of ${max} today`}</div>
+            ${!isUnlim ? `
+            <div class="progress-bar">
+              <div class="progress-fill ${isWarn?"warn":""}" style="width:${pct(used,max)}%"></div>
+            </div>` : ""}
+          </div>`;
+        }).join("")}
+      </div>
+
+      <!-- Account info -->
+      <p class="text-xs text-muted" style="letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">Account Details</p>
+      <div class="card" style="margin-bottom:24px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px">
+          <div>
+            <div class="text-xs text-muted" style="margin-bottom:4px">Name</div>
+            <div style="font-size:0.88rem">${user.displayName || "—"}</div>
+          </div>
+          <div>
+            <div class="text-xs text-muted" style="margin-bottom:4px">Email</div>
+            <div style="font-size:0.88rem">${user.email}</div>
+          </div>
+          <div>
+            <div class="text-xs text-muted" style="margin-bottom:4px">Member Since</div>
+            <div style="font-size:0.88rem">${userData.createdAt?.toDate?.()?.toLocaleDateString() || "Recently"}</div>
+          </div>
+          <div>
+            <div class="text-xs text-muted" style="margin-bottom:4px">User ID</div>
+            <div style="font-size:0.75rem;color:var(--muted)">${user.uid.slice(0,20)}…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upgrade card (free only) -->
+      ${!isPro ? `
+      <div id="upgrade" class="card" style="border-color:rgba(0,229,255,0.2);position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,229,255,0.04),rgba(124,58,237,0.04));pointer-events:none"></div>
+        <div style="position:relative">
+          <p class="text-xs" style="letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:12px">⭐ Upgrade to Pro</p>
+          <h3 style="font-family:var(--font-head);font-size:1.3rem;margin-bottom:8px">Unlock Everything in MARXi</h3>
+          <p style="color:var(--muted);font-size:0.82rem;line-height:1.8;margin-bottom:20px">
+            Unlimited chats, images, websites, video generation, file uploads, and priority AI speed — all for ₦2,000/month.
+          </p>
+          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+            <div>
+              <div style="font-family:var(--font-head);font-size:2.2rem;font-weight:800;letter-spacing:-1px">₦2,000</div>
+              <div class="text-xs text-muted">per month · cancel anytime</div>
+            </div>
+            <button class="btn btn-primary btn-lg" onclick="toast('Payment coming soon! Check back shortly.','')">
+              ⚡ Upgrade Now
+            </button>
+          </div>
+        </div>
+      </div>` : `
+      <div class="card" style="border-color:rgba(0,229,255,0.15)">
+        <h3 style="font-family:var(--font-head);margin-bottom:8px">⭐ You're on Pro</h3>
+        <p style="color:var(--muted);font-size:0.82rem;line-height:1.8">
+          You have full access to all MARXi features. Thank you for supporting the platform!
+        </p>
+      </div>`}
+    </div>`;
+</script>
+</body>
+</html>
