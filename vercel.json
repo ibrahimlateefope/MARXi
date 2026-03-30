@@ -1,10 +1,7 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" },
-    { "source": "/app/:path*", "destination": "/app/:path*" },
-    { "source": "/admin/:path*", "destination": "/admin/:path*" },
-    { "source": "/:path*", "destination": "/:path*" }
+    { "source": "/api/:path*", "destination": "/api/:path*" }
   ],
   "headers": [
     {
