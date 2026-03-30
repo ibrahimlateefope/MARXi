@@ -97,8 +97,10 @@
 
   // Already logged in → go to app
   onAuthStateChanged(auth, user => {
-    if (user) location.href = "app/chat.html";
-  });
+    if (user && !location.pathname.includes("chat.html")) {
+        location.href = "app/chat.html";
+    }
+});
 
   // Init tab from URL
   const params = new URLSearchParams(location.search);
