@@ -20,12 +20,12 @@ import {
 // It only identifies your project — Firestore Rules protect your data.
 // Real API secrets (Groq, Gemini, HF) live in Firestore, never here.
 const firebaseConfig = {
-    apiKey: "FIREBASE_API_KEY",
-    authDomain: "FIREBASE_AUTH_DOMAIN",
-    projectId: "FIREBASE_PROJECT_ID",
-    storageBucket: "FIREBASE_STORAGE_BUCKET",
-    messagingSenderId: "FIREBASE_SENDER_ID",
-    appId: "FIREBASE_APP_ID"
+    apiKey: "AIzaSyBVBQEPnYOTbkkfPKAqO6aYnVs29GSpId8",
+    authDomain: "marxi-b1562.firebaseapp.com",
+    projectId: "marxi-b1562",
+    storageBucket: "marxi-b1562.firebasestorage.app",
+    messagingSenderId: "702306346639",
+    appId: "1:702306346639:web:01a30dc5f19f0751e172fa"
 };
 
 export const app = initializeApp(firebaseConfig);
